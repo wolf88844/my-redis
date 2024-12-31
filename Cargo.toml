@@ -6,3 +6,7 @@ edition = "2024"
 [dependencies]
 mini-redis = "0.4.1"
 tokio = { version = "1.42.0", features = ["full"] }
+
+[[example]]
+name="hello-redis"
+path="examples/hello-redis.rs"
