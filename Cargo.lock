@@ -340,9 +340,9 @@ version = "0.1.0"
 dependencies = [
  "atoi",
  "bytes",
- "log",
  "mini-redis",
  "tokio",
+ "tracing",
 ]
 
 [[package]]

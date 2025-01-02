@@ -66,7 +66,7 @@ impl Connection {
     }
     /// 将一个 `Frame` 结构体写入到 `Connection` 结构体的缓冲区中
     /// 如果写入成功，则返回 `Ok(())`；如果写入失败，则返回相应的错误
-    async fn write_frame(&mut self, frame: &Frame) -> io::Result<()> {
+    pub async fn write_frame(&mut self, frame: &Frame) -> io::Result<()> {
         // 根据 Frame 结构体的不同类型，进行不同的处理
         match frame {
             // 如果是数组类型，则先写入一个 '*' 字符，然后写入数组的长度，最后遍历数组中的每个元素，递归调用 write_frame 函数写入每个元素
