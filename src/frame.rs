@@ -1,7 +1,7 @@
 use bytes::{Buf, Bytes};
 use std::convert::{Infallible, TryInto};
 use std::fmt;
-use std::io::{Cursor};
+use std::io::Cursor;
 use std::num::TryFromIntError;
 use std::string::FromUtf8Error;
 

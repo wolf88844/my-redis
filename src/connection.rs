@@ -74,7 +74,7 @@ impl Connection {
                 self.stream.write_u8(b'*').await?;
                 self.write_decimal(val.len() as u64).await?;
                 for entry in &**val {
-                    self.write_frame(entry).await?;
+                    Box::pin(self.write_frame(entry)).await?;
                 }
             }
             // 如果是其他类型，则直接调用 write_value 函数写入值
