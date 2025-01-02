@@ -31,7 +31,7 @@ impl Parse{
     pub(crate) fn next_string(&mut self)->Result<String,ParseError>{
         match self.next()?{
             Frame::Simple(s) => Ok(s),
-            Frame::Bulk(data) => str::from_utf8(&data[..])
+            Frame::Bulk(data) => std::str::from_utf8(&data[..])
                 .map(|s| s.to_string())
                 .map_err(|_| "protocol error; expected string".into()),
             frame=>Err(format!("protocol error; expected simple frame or bulk frame, got {:?}", frame).into()),

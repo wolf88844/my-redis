@@ -342,6 +342,7 @@ dependencies = [
  "bytes",
  "mini-redis",
  "tokio",
+ "tokio-stream",
  "tracing",
 ]
 

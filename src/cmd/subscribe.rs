@@ -1,8 +1,9 @@
+use std::collections::HashMap;
 use bytes::Bytes;
 use tokio::select;
 use tokio::sync::broadcast;
-use crate::cmd::Command;
-use crate::cmd::Command::Unknown;
+use tokio_stream::StreamExt;
+use crate::cmd::{Command, Unknown};
 use crate::connection::Connection;
 use crate::db::Db;
 use crate::frame::Frame;
@@ -41,7 +42,7 @@ impl Subscribe {
     }
 
     pub(crate) async fn apply(mut self,db:&Db,dst:&mut Connection,shutdow:&mut Shutdown)->crate::Result<()>{
-        let mut subs = StreamExt::new();
+        let mut subs = HashMap::new();
 
         loop{
             for channel_name in self.channels.drain(..){
@@ -85,7 +86,7 @@ impl Subscribe {
 }
 
 async fn subscribe_to_channel(channel_name:String,
-subscriptions:&mut StreamMap<String,broadcast::Receiver<Bytes>>,
+subscriptions:&mut HashMap<String,broadcast::Receiver<Bytes>>,
 db:&Db,
 dst:&mut Connection,
 )->crate::Result<()>{
@@ -97,7 +98,7 @@ dst:&mut Connection,
 }
 
 async fn handle_command(frame:Frame,subscribe_to:&mut Vec<String>,
-subscriptions:&mut StreamMap<String,broadcast::Receiver<Bytes>>,
+subscriptions:&mut HashMap<String,broadcast::Receiver<Bytes>>,
 dst:&mut Connection)->crate::Result<()>{
     match Command::from_frame(frame)? {
         Command::Subscribe(subscribe)=>{
@@ -124,3 +125,58 @@ dst:&mut Connection)->crate::Result<()>{
     Ok(())
 }
 
+fn make_subscribe_frame(channel_name:String,num_subs:usize)->Frame{
+    let mut response = Frame::array();
+    response.push_bulk(Bytes::from_static(b"subscribe"));
+    response.push_bulk(Bytes::from(channel_name));
+    response.push_int(num_subs as u64);
+    response
+}
+
+fn make_unsubscribe_frame(channel_name:String,num_subs:usize)->Frame{
+    let mut response = Frame::array();
+    response.push_bulk(Bytes::from_static(b"unsubscribe"));
+    response.push_bulk(Bytes::from(channel_name));
+    response.push_int(num_subs as u64);
+    response
+}
+
+fn make_message_frame(channel_name:String,msg:Bytes)->Frame{
+    let mut response = Frame::array();
+    response.push_bulk(Bytes::from_static(b"message"));
+    response.push_bulk(Bytes::from(channel_name));
+    response.push_bulk(msg);
+    response
+}
+
+impl Unsubscribe{
+    pub(crate) fn new(channels:&[String])->Unsubscribe{
+        Unsubscribe{
+            channels: channels.to_vec(),
+        }
+    }
+
+    pub(crate) fn parse_frames(parse:&mut Parse)->Result<Unsubscribe,ParseError>{
+        use ParseError::EndOfStream;
+
+        let mut channels = vec![];
+
+        loop{
+            match parse.next_string(){
+                Ok(s)=>channels.push(s),
+                Err(EndOfStream)=>break,
+                Err(e)=>return Err(e.into()),
+            }
+        }
+        Ok(Unsubscribe{channels})
+    }
+
+    pub(crate) fn into_frame(self)->Frame{
+        let mut frame= Frame::array();
+        frame.push_bulk(Bytes::from("unsubscribe".as_bytes()));
+        for channel in self.channels{
+            frame.push_bulk(Bytes::from(channel.into_bytes()));
+        }
+        frame
+    }
+}
