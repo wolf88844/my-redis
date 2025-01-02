@@ -12,7 +12,6 @@ pub(crate) struct Db {
     shared: Arc<Shared>,
 }
 
-
 #[derive(Debug)]
 struct Shared {
     state: Mutex<State>,
@@ -205,7 +204,6 @@ impl Db {
     }
 }
 
-
 // 为 Db 结构体实现 Drop 特征，用于在实例被销毁时执行清理操作
 impl Drop for Db {
     fn drop(&mut self) {
@@ -222,7 +220,6 @@ impl Drop for Db {
         }
     }
 }
-
 
 // 定义一个异步函数，用于清除过期的任务
 async fn purge_expired_tasks(shared: Arc<Shared>) {
