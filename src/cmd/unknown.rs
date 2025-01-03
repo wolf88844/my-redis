@@ -1,6 +1,6 @@
-use tracing::debug;
 use crate::connection::Connection;
 use crate::frame::Frame;
+use tracing::debug;
 
 #[derive(Debug)]
 pub struct Unknown {

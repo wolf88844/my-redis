@@ -1,8 +1,8 @@
-use log::debug;
 use crate::connection::Connection;
 use crate::db::Db;
 use crate::frame::Frame;
 use crate::parse::Parse;
+use log::debug;
 
 #[derive(Debug)]
 pub struct Get {
@@ -20,15 +20,15 @@ impl Get {
         &self.key
     }
 
-    pub(crate) fn parse_frames(parse:&mut Parse)->crate::Result<Get>{
+    pub(crate) fn parse_frames(parse: &mut Parse) -> crate::Result<Get> {
         let key = parse.next_string()?;
         Ok(Get { key })
     }
 
-    pub(crate) async fn apply(self,db:&Db,dst:&mut Connection)->crate::Result<()>{
-        let response = if let Some(value)=db.get(&self.key){
+    pub(crate) async fn apply(self, db: &Db, dst: &mut Connection) -> crate::Result<()> {
+        let response = if let Some(value) = db.get(&self.key) {
             Frame::Bulk(value)
-        }else{
+        } else {
             Frame::Null
         };
         debug!(?response);
