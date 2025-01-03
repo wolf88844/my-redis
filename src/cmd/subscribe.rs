@@ -7,7 +7,7 @@ use crate::shutdown::Shutdown;
 use bytes::Bytes;
 use tokio::select;
 use tokio_stream::wrappers::BroadcastStream;
-use tokio_stream::{StreamMap, StreamExt};
+use tokio_stream::{StreamExt, StreamMap};
 #[derive(Debug)]
 pub struct Subscribe {
     channels: Vec<String>,
@@ -96,7 +96,6 @@ impl Subscribe {
         }
     }
 
-
     pub(crate) fn into_frame(self) -> Frame {
         let mut frame = Frame::array();
         frame.push_bulk(Bytes::from("subscribe".as_bytes()));
@@ -114,7 +113,7 @@ async fn subscribe_to_channel(
     dst: &mut Connection,
 ) -> crate::Result<()> {
     let rx = db.subscribe(channel_name.clone());
-    subscriptions.insert(channel_name.clone(),BroadcastStream::new(rx));
+    subscriptions.insert(channel_name.clone(), BroadcastStream::new(rx));
     let response = make_subscribe_frame(channel_name, subscriptions.len());
     dst.write_frame(&response).await?;
     Ok(())
