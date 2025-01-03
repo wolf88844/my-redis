@@ -1,21 +1,13 @@
-use std::{
-    sync::Arc,
-    time::Duration,
-};
+use std::{sync::Arc, time::Duration};
 
 use tokio::{
     net::{TcpListener, TcpStream},
-    sync::{Semaphore, broadcast,mpsc},
+    sync::{Semaphore, broadcast, mpsc},
     time,
 };
 use tracing::{debug, error, info};
 
-use crate::{
-    cmd::Command,
-    connection::Connection,
-    db::Db,
-    shutdown::Shutdown,
-};
+use crate::{cmd::Command, connection::Connection, db::Db, shutdown::Shutdown};
 
 #[derive(Debug)]
 struct Listener {
