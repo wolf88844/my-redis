@@ -6,7 +6,7 @@ use crate::parse::{Parse, ParseError};
 use crate::shutdown::Shutdown;
 use bytes::Bytes;
 use tokio::select;
-use tokio::sync::broadcast;
+use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::{StreamMap, StreamExt};
 #[derive(Debug)]
 pub struct Subscribe {
@@ -40,43 +40,62 @@ impl Subscribe {
         Ok(Subscribe { channels })
     }
 
+    /// 应用订阅命令到数据库和连接
+    ///
+    /// 该函数处理订阅命令，将订阅的频道添加到流映射中，并在接收到消息时将其发送回客户端。
+    /// 它还处理来自客户端的命令，并在接收到关闭信号时优雅地关闭连接。
+    ///
+    /// # 参数
+    ///
+    /// * `self` - 订阅命令的可变引用
+    /// * `db` - 数据库的不可变引用
+    /// * `dst` - 客户端连接的可变引用
+    /// * `shutdow` - 关闭信号的可变引用
+    ///
+    /// # 返回值
+    ///
+    /// 返回一个 `crate::Result<()>`，表示操作的成功或失败。
     pub(crate) async fn apply(
         mut self,
         db: &Db,
         dst: &mut Connection,
         shutdow: &mut Shutdown,
     ) -> crate::Result<()> {
+        // 创建一个新的流映射来存储订阅的频道和它们的接收器
         let mut subs = StreamMap::new();
         loop {
+            // 遍历所有要订阅的频道
             for channel_name in self.channels.drain(..) {
+                // 为每个频道订阅并将其添加到流映射中
                 subscribe_to_channel(channel_name, &mut subs, db, dst).await?;
             }
+            // 使用 `select!` 宏来同时等待多个异步操作
             select! {
+                // 当从订阅的频道接收到消息时
                 Some((channel_name,msg))=subs.next()=>{
-                    use tokio::sync::broadcast::error::RecvError;
+                    // 处理接收到的消息
                     let msg = match msg{
-                        Ok(msg)=>msg,
-                        Err(RecvError::Lagged(_))=>continue,
-                        Err(RecvError::Closed)=>unreachable!(),
+                        Ok(msg) => msg,
+                        Err(_) => unreachable!(),
                     };
+                    // 将消息发送回客户端
                     dst.write_frame(&make_message_frame(channel_name,msg)).await?;
                 }
+                // 当从客户端接收到命令时
                 res = dst.read_frame()=>{
+                    // 处理接收到的命令
                     let frame = match res?{
                         Some(frame)=>frame,
                         None=>return Ok(()),
                     };
-                    handle_command(
-                        frame,
-                        &mut self.channels,
-                        &mut subs,
-                        dst,
-                    ).await?;
+                    handle_command(frame,&mut self.channels,&mut subs,dst).await?;
                 }
+                // 当接收到关闭信号时
                 _=shutdow.recv()=>return Ok(()),
             }
         }
     }
+
 
     pub(crate) fn into_frame(self) -> Frame {
         let mut frame = Frame::array();
@@ -90,12 +109,12 @@ impl Subscribe {
 
 async fn subscribe_to_channel(
     channel_name: String,
-    subscriptions: &mut StreamMap<String, broadcast::Receiver<Bytes>>,
+    subscriptions: &mut StreamMap<String, BroadcastStream<Bytes>>,
     db: &Db,
     dst: &mut Connection,
 ) -> crate::Result<()> {
     let rx = db.subscribe(channel_name.clone());
-    subscriptions.insert(channel_name.clone(), rx);
+    subscriptions.insert(channel_name.clone(),BroadcastStream::new(rx));
     let response = make_subscribe_frame(channel_name, subscriptions.len());
     dst.write_frame(&response).await?;
     Ok(())
@@ -104,7 +123,7 @@ async fn subscribe_to_channel(
 async fn handle_command(
     frame: Frame,
     subscribe_to: &mut Vec<String>,
-    subscriptions: &mut StreamMap<String, broadcast::Receiver<Bytes>>,
+    subscriptions: &mut StreamMap<String, BroadcastStream<Bytes>>,
     dst: &mut Connection,
 ) -> crate::Result<()> {
     match Command::from_frame(frame)? {
