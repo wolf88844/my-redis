@@ -14,11 +14,11 @@ struct Cli {
     command: Command,
 
     /// Redis 服务器的主机地址。
-    #[arg(short, long, help = "Redis host")]
+    #[arg(short, long,default_value="127.0.0.1",help = "Redis host",required=false)]
     addr: String,
 
     /// Redis 服务器的端口号。
-    #[arg(short, long, help = "Redis port")]
+    #[arg(short, long, default_value="6379",help = "Redis port",required=false)]
     port: String,
 }
 
