@@ -8,6 +8,7 @@ use crate::connection::Connection;
 use crate::db::Db;
 use crate::frame::Frame;
 use crate::parse::Parse;
+use crate::shutdown::Shutdown;
 pub use get::Get;
 pub use publish::Publish;
 pub use set::Set;
@@ -45,7 +46,7 @@ impl Command {
         self,
         db: &Db,
         dst: &mut Connection,
-        shutdown: &mut ShutDown,
+        shutdown: &mut Shutdown,
     ) -> crate::Result<()> {
         use Command::*;
         match self {
@@ -53,7 +54,7 @@ impl Command {
             Publish(cmd) => cmd.apply(db, dst).await,
             Set(cmd) => cmd.apply(db, dst).await,
             Subscribe(cmd) => cmd.apply(db, dst, shutdown).await,
-            Unsubscribe(cmd) => cmd.apply(db, dst, shutdown).await,
+            Unsubscribe(_) => Err("unsubscribe si unsupproted in this context".into()),
             Unknown(cmd) => cmd.apply(dst).await,
         }
     }

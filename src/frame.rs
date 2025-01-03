@@ -111,7 +111,7 @@ impl Frame {
                     skip(src, 4)
                 // 如果下一个字节不是 '-'，则读取一个十进制数，并跳过相应数量的字节
                 } else {
-                    let len = get_decimal(src)?.try_into()?;
+                    let len: usize = get_decimal(src)?.try_into()?;
                     skip(src, len + 2)
                 }
             }
@@ -170,7 +170,8 @@ impl Frame {
                     if src.remaining() < n {
                         return Err(Error::Incomplete);
                     }
-                    let data = Bytes::copy_from_slice(&src.bytes()[..len]);
+                    let data =
+                        Bytes::copy_from_slice(&src.get_ref()[src.position() as usize..][..len]);
                     skip(src, n)?;
                     Ok(Frame::Bulk(data))
                 }
@@ -244,7 +245,7 @@ fn peek_u8(src: &mut Cursor<&[u8]>) -> Result<u8, Error> {
         return Err(Error::Incomplete);
     }
     // 返回下一个字节
-    Ok(src.bytes()[0])
+    Ok(src.chunk()[0])
 }
 
 /// 从 `Cursor<&[u8]>` 中读取下一个字节

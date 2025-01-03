@@ -2,8 +2,7 @@ use crate::connection::Connection;
 use crate::db::Db;
 use crate::frame::Frame;
 use crate::parse::Parse;
-use log::debug;
-
+use tracing::debug;
 #[derive(Debug)]
 pub struct Get {
     key: String,

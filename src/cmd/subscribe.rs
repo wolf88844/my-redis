@@ -5,10 +5,9 @@ use crate::frame::Frame;
 use crate::parse::{Parse, ParseError};
 use crate::shutdown::Shutdown;
 use bytes::Bytes;
-use std::collections::HashMap;
 use tokio::select;
 use tokio::sync::broadcast;
-use tokio_stream::StreamExt;
+use tokio_stream::{StreamMap, StreamExt};
 #[derive(Debug)]
 pub struct Subscribe {
     channels: Vec<String>,
@@ -47,15 +46,14 @@ impl Subscribe {
         dst: &mut Connection,
         shutdow: &mut Shutdown,
     ) -> crate::Result<()> {
-        let mut subs = HashMap::new();
-
+        let mut subs = StreamMap::new();
         loop {
             for channel_name in self.channels.drain(..) {
                 subscribe_to_channel(channel_name, &mut subs, db, dst).await?;
             }
             select! {
                 Some((channel_name,msg))=subs.next()=>{
-                    use tokio::sync::broadcast::RecvError;
+                    use tokio::sync::broadcast::error::RecvError;
                     let msg = match msg{
                         Ok(msg)=>msg,
                         Err(RecvError::Lagged(_))=>continue,
@@ -92,7 +90,7 @@ impl Subscribe {
 
 async fn subscribe_to_channel(
     channel_name: String,
-    subscriptions: &mut HashMap<String, broadcast::Receiver<Bytes>>,
+    subscriptions: &mut StreamMap<String, broadcast::Receiver<Bytes>>,
     db: &Db,
     dst: &mut Connection,
 ) -> crate::Result<()> {
@@ -106,7 +104,7 @@ async fn subscribe_to_channel(
 async fn handle_command(
     frame: Frame,
     subscribe_to: &mut Vec<String>,
-    subscriptions: &mut HashMap<String, broadcast::Receiver<Bytes>>,
+    subscriptions: &mut StreamMap<String, broadcast::Receiver<Bytes>>,
     dst: &mut Connection,
 ) -> crate::Result<()> {
     match Command::from_frame(frame)? {

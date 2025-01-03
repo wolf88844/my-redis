@@ -34,7 +34,7 @@ impl Publish {
     pub(crate) fn info_frame(self) -> Frame {
         let mut frame = Frame::array();
         frame.push_bulk(Bytes::from("publish".as_bytes()));
-        frame.push_bulk(Bytes::from(self.channel.as_bytes()));
+        frame.push_bulk(Bytes::from(self.channel.into_bytes()));
         frame.push_bulk(self.message);
         frame
     }

@@ -4,7 +4,7 @@ use crate::frame::Frame;
 use crate::parse::{Parse, ParseError};
 use bytes::Bytes;
 use std::time::Duration;
-use tracing::{debug, instrument};
+use tracing::debug;
 
 #[derive(Debug)]
 pub struct Set {
@@ -66,7 +66,7 @@ impl Set {
     pub(crate) fn into_frame(self) -> Frame {
         let mut frame = Frame::array();
         frame.push_bulk(Bytes::from("set".as_bytes()));
-        frame.push_bulk(Bytes::from(self.key.as_bytes()));
+        frame.push_bulk(Bytes::from(self.key.into_bytes()));
         frame.push_bulk(self.value);
         frame
     }
