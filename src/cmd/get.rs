@@ -16,6 +16,7 @@ impl Get {
         }
     }
 
+    #[allow(dead_code)]
     pub fn key(&self) -> &str {
         &self.key
     }

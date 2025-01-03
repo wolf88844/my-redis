@@ -22,12 +22,15 @@ impl Set {
         }
     }
 
+    #[allow(dead_code)]
     pub fn key(&self) -> &str {
         &self.key
     }
+    #[allow(dead_code)]
     pub fn value(&self) -> &Bytes {
         &self.value
     }
+    #[allow(dead_code)]
     pub fn expire(&self) -> Option<Duration> {
         self.expire
     }

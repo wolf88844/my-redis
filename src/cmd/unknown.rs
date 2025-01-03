@@ -21,7 +21,7 @@ impl Unknown {
     pub(crate) async fn apply(self, dst: &mut Connection) -> crate::Result<()> {
         let response = Frame::Error(format!("ERR unknown command '{}'", self.command_name));
         debug!(?response);
-        dst.write_frame(&response).await;
+        let _ = dst.write_frame(&response).await;
         Ok(())
     }
 }

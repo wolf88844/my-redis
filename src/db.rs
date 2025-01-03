@@ -167,7 +167,8 @@ impl Db {
 
         // 如果需要通知后台任务，则进行通知
         if notify {
-            self.shared.background_task.notified();
+            #[allow(clippy::let_underscore_future)]
+            let _ = self.shared.background_task.notified();
         }
     }
 
@@ -216,7 +217,8 @@ impl Drop for Db {
             // 释放互斥锁
             drop(state);
             // 通知后台任务
-            self.shared.background_task.notified();
+            #[allow(clippy::let_underscore_future)]
+            let _ = self.shared.background_task.notified();
         }
     }
 }

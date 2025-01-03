@@ -18,6 +18,6 @@ pub async fn main() -> my_redis::Result<()> {
 #[derive(Parser, Debug)]
 #[command(name="my-redis-server",version=env!("CARGO_PKG_VERSION"),author=env!("CARGO_PKG_AUTHORS"),about="A Redis server")]
 struct Cli {
-    #[arg(long,short)]
+    #[arg(long, short)]
     port: Option<String>,
 }

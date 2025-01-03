@@ -190,7 +190,7 @@ impl Unsubscribe {
             match parse.next_string() {
                 Ok(s) => channels.push(s),
                 Err(EndOfStream) => break,
-                Err(e) => return Err(e.into()),
+                Err(e) => return Err(e),
             }
         }
         Ok(Unsubscribe { channels })

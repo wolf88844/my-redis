@@ -27,7 +27,7 @@ impl Publish {
     pub(crate) async fn apply(self, db: &Db, dst: &mut Connection) -> crate::Result<()> {
         let num_subscribers = db.publish(&self.channel, self.message);
         let response = Frame::Integer(num_subscribers as u64);
-        dst.write_frame(&response).await;
+        let _ = dst.write_frame(&response).await;
         Ok(())
     }
 
