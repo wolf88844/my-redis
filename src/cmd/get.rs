@@ -2,6 +2,7 @@ use crate::connection::Connection;
 use crate::db::Db;
 use crate::frame::Frame;
 use crate::parse::Parse;
+use bytes::Bytes;
 use tracing::debug;
 #[derive(Debug)]
 pub struct Get {
@@ -34,5 +35,12 @@ impl Get {
 
         dst.write_frame(&response).await?;
         Ok(())
+    }
+
+    pub(crate) fn into_frame(self) -> Frame {
+        let mut frame = Frame::array();
+        frame.push_bulk(Bytes::from("get".as_bytes()));
+        frame.push_bulk(Bytes::from(self.key.into_bytes()));
+        frame
     }
 }
