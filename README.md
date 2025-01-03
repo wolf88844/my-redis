@@ -69,7 +69,7 @@ cargo run --bin my-redis-cli -- --addr 127.0.0.1 --port 6379 publish channel mes
 ```
 
 ## 贡献
-贡献者可以提交 pull request 来改进项目。
+欢迎贡献代码、报告问题或提出建议！贡献者可以提交 pull request 来改进项目。
 
 ## 许可证
 my-redis 使用 MIT 许可证。
